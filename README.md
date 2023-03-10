@@ -1,1 +1,1 @@
-# talk-throw-exceptions
+# Snippets for the talk "Throw exceptions... out of your codebase"
