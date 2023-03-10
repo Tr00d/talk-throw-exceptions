@@ -60,7 +60,7 @@ public class CatInBoxTest
 
     internal class SchrodingerBox
     {
-        private readonly Cat? cat;
+        private readonly Cat cat;
 
         private SchrodingerBox(Cat cat) => this.cat = cat;
 
@@ -68,11 +68,15 @@ public class CatInBoxTest
         {
         }
 
-        public Cat? OpenBox() => this.cat;
+        public Cat OpenBox() => this.cat;
 
         public SchrodingerBox Shake()
         {
-            this.cat?.Meow();
+            if (this.cat is { })
+            {
+                this.cat.Meow();
+            }
+
             return this;
         }
 
