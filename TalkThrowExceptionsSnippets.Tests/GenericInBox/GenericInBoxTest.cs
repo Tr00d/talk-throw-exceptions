@@ -62,27 +62,31 @@ public class GenericInBoxTest
 
     internal class SchrodingerBox<T>
     {
+        private bool IsSome { get; }
         private readonly T value;
 
+        // Constructor for Some
         private SchrodingerBox(T value)
         {
             this.value = value;
             this.IsSome = true;
         }
 
+        // Constructor for None
         private SchrodingerBox() => this.IsSome = false;
 
-        public bool IsSome { get; }
-
+        // Applies the function on the value IF our box contains a value
         public SchrodingerBox<T> Map(Func<T, T> map) =>
             this.IsSome
                 ? Some(map(this.value))
                 : None();
 
+        // Creates a box without a value
         public static SchrodingerBox<T> None() => new();
 
         public T OpenBox() => this.value;
 
+        // Creates a box with a value
         public static SchrodingerBox<T> Some(T value) => new(value);
     }
 }
