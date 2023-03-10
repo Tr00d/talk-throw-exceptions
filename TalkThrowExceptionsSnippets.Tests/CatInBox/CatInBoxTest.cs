@@ -18,13 +18,6 @@ public class CatInBoxTest
             .Shake();
 
     [Fact]
-    public void DeadCatIsSadlyDead() =>
-        SchrodingerBox.WithDeadCat()
-            .Shake()
-            .Shake()
-            .Shake();
-
-    [Fact]
     public void OpenBox_ReturnsAliveCat_WhenCatIsAlive() =>
         SchrodingerBox.WithAliveCat(this.GetAliveCat())
             .Shake()
@@ -60,34 +53,34 @@ public class CatInBoxTest
 
     internal class SchrodingerBox
     {
-        private readonly Cat cat;
+        private readonly Cat? cat;
 
+        // Creates a box with an alive cat inside
         private SchrodingerBox(Cat cat) => this.cat = cat;
 
+        // Creates a box with a dead cat
         private SchrodingerBox()
         {
         }
 
-        public Cat OpenBox() => this.cat;
+        // Look inside the box
+        public Cat? OpenBox() => this.cat;
 
+        // Shakes the box. The cat doesn't like it. Meow.
         public SchrodingerBox Shake()
         {
-            if (this.cat is { })
-            {
-                this.cat.Meow();
-            }
-
+            this.cat?.Meow();
             return this;
         }
 
+        // Shakes the box (too hard), then returns a new box with a dead cat
         public SchrodingerBox ShakeTooHard()
         {
             this.Shake();
-            return WithDeadCat();
+            return new SchrodingerBox();
         }
 
+        // Creates a box with a cat
         public static SchrodingerBox WithAliveCat(Cat cat) => new(cat);
-
-        public static SchrodingerBox WithDeadCat() => new();
     }
 }
