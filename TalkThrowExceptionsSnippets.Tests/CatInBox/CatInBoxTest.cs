@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -10,29 +11,45 @@ public class CatInBoxTest
     public CatInBoxTest(ITestOutputHelper outputHelper) => this.helper = outputHelper;
 
     [Fact]
-    public void AliveCatSaysMeowMeowMeow() =>
-        Box.WithAliveCat(this.GetAliveCat())
+    public void AliveCatMeowsMeowsMeows() =>
+        SchrodingerBox.WithAliveCat(this.GetAliveCat())
             .Shake()
             .Shake()
             .Shake();
 
     [Fact]
-    public void DeadCatSaysNothing() =>
-        Box.WithDeadCat()
+    public void DeadCatIsSadlyDead() =>
+        SchrodingerBox.WithDeadCat()
             .Shake()
             .Shake()
             .Shake();
 
     [Fact]
-    public void ShakesTooHardKillsTheCat() =>
-        Box.WithAliveCat(this.GetAliveCat())
+    public void OpenBox_ReturnsAliveCat_WhenCatIsAlive() =>
+        SchrodingerBox.WithAliveCat(this.GetAliveCat())
+            .Shake()
+            .OpenBox()
+            .Should()
+            .Be(this.GetAliveCat());
+
+    [Fact]
+    public void OpenBox_ReturnsDeadCat_WhenCatIsDead() =>
+        SchrodingerBox.WithAliveCat(this.GetAliveCat())
+            .ShakeTooHard()
+            .OpenBox()
+            .Should()
+            .BeNull();
+
+    [Fact]
+    public void ShakeTooHardUnfortunatelyKillsTheCat() =>
+        SchrodingerBox.WithAliveCat(this.GetAliveCat())
             .Shake()
             .ShakeTooHard()
             .Shake();
 
     private Cat GetAliveCat() => new(this.helper);
 
-    internal class Cat
+    internal readonly struct Cat
     {
         private readonly ITestOutputHelper helper;
 
@@ -41,30 +58,32 @@ public class CatInBoxTest
         public void Meow() => this.helper.WriteLine("Meow");
     }
 
-    internal class Box
+    internal class SchrodingerBox
     {
         private readonly Cat? cat;
 
-        private Box(Cat cat) => this.cat = cat;
+        private SchrodingerBox(Cat cat) => this.cat = cat;
 
-        private Box()
+        private SchrodingerBox()
         {
         }
 
-        public Box Shake()
+        public Cat? OpenBox() => this.cat;
+
+        public SchrodingerBox Shake()
         {
             this.cat?.Meow();
             return this;
         }
 
-        public Box ShakeTooHard()
+        public SchrodingerBox ShakeTooHard()
         {
             this.Shake();
             return WithDeadCat();
         }
 
-        public static Box WithAliveCat(Cat cat) => new(cat);
+        public static SchrodingerBox WithAliveCat(Cat cat) => new(cat);
 
-        public static Box WithDeadCat() => new();
+        public static SchrodingerBox WithDeadCat() => new();
     }
 }
