@@ -36,16 +36,19 @@ public class LinqExample
             }
         }
 
-        output.Should().BeEquivalentTo("Karim Benzema", "Sadio Mané", "Kevin De Bruyne");
+        output
+            .Should()
+            .BeEquivalentTo("Karim Benzema", "Sadio Mané", "Kevin De Bruyne");
     }
 
     [Fact]
     public void GetTop3PlayersWithLinq() =>
         this.top10Players
-            .Where(player => player.Rank <= 3)
             .OrderBy(player => player.Rank)
+            .Take(3)
             .Select(player => player.GetDisplayName())
-            .Should().BeEquivalentTo("Karim Benzema", "Sadio Mané", "Kevin De Bruyne");
+            .Should()
+            .BeEquivalentTo("Karim Benzema", "Sadio Mané", "Kevin De Bruyne");
 
     private record Person(string Firstname, string Lastname, int Rank)
     {
