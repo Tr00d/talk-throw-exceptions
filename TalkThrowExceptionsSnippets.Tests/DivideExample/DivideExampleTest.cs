@@ -1,30 +1,24 @@
 using System;
-using Xunit;
+using LanguageExt;
 
 namespace TalkThrowExceptionsSnippets.Tests.DivideExample;
-
-public class DivideExampleTest
-{
-    private readonly ICanDivide calculator;
-
-    public DivideExampleTest() => this.calculator = new Calculator();
-
-    [Fact]
-    public void Blabla()
-    {
-        this.calculator.Divide(0, 0);
-    }
-}
 
 internal interface ICanDivide
 {
     decimal Divide(decimal x, decimal y);
 }
 
-internal class Calculator : ICanDivide
+public class DivideExampleTest
 {
-    public decimal Divide(decimal x, decimal y) =>
+    public void Main()
+    {
+        double a = 98, b = 0;
+        var text = SafeDivision(a, b).Match(success => $"{a} divided by {b} = {success}", _ => _);
+        Console.WriteLine(text);
+    }
+
+    private static Either<string, double> SafeDivision(double x, double y) =>
         y == 0
-            ? throw new DivideByZeroException()
-            : x / y;
+            ? Either<string, double>.Left("Attempted divide by zero.")
+            : Either<string, double>.Right(x / y);
 }
