@@ -37,6 +37,16 @@ public class GenericInBoxWithMatchTest
             .Be(0);
 
     [Fact]
+    public void Match_ShouldExecuteNoneFunction_Declarative() =>
+        SchrodingerBox<int>.None()
+            .Map(IncrementValue)
+            .Map(IncrementValue)
+            .Map(IncrementValue)
+            .Match(ConvertToMessage, GetDefaultMessage)
+            .Should()
+            .Be(GetDefaultMessage());
+
+    [Fact]
     public void Match_ShouldExecuteNoneFunction_GivenValueIsNone() =>
         SchrodingerBox<int>.None()
             .Map(value => value + 1)
@@ -47,14 +57,28 @@ public class GenericInBoxWithMatchTest
             .Be("The value is none");
 
     [Fact]
-    public void Match_ShouldExecuteSomeFunction_GivenValueIsSome() =>
+    public void Match_ShouldExecuteSomeFunction_Declarative() =>
         SchrodingerBox<int>.Some(3)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
+            .Map(IncrementValue)
+            .Map(IncrementValue)
+            .Map(IncrementValue)
             .Match(some => $"The value is some {some}!", () => "The value is none")
             .Should()
-            .Be("The value is some 3!");
+            .Be("The value is some 6!");
+
+    [Fact]
+    public void Match_ShouldExecuteSomeFunction_GivenValueIsSome() =>
+        SchrodingerBox<int>.Some(3)
+            .Map(IncrementValue)
+            .Map(IncrementValue)
+            .Map(IncrementValue)
+            .Match(ConvertToMessage, GetDefaultMessage)
+            .Should()
+            .Be(ConvertToMessage(6));
+
+    private static string ConvertToMessage(int value) => $"The value is some {value}!";
+
+    private static string GetDefaultMessage() => "The value is none";
 
     private static int IncrementValue(int value) => value + 1;
 
