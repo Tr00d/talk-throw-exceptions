@@ -62,19 +62,19 @@ public class GenericInBoxWithMatchTest
             .Map(IncrementValue)
             .Map(IncrementValue)
             .Map(IncrementValue)
-            .Match(some => $"The value is some {some}!", () => "The value is none")
+            .Match(ConvertToMessage, GetDefaultMessage)
             .Should()
-            .Be("The value is some 6!");
+            .Be(ConvertToMessage(6));
 
     [Fact]
     public void Match_ShouldExecuteSomeFunction_GivenValueIsSome() =>
         SchrodingerBox<int>.Some(3)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Match(ConvertToMessage, GetDefaultMessage)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Match(some => $"The value is some {some}!", () => "The value is none")
             .Should()
-            .Be(ConvertToMessage(6));
+            .Be("The value is some 6!");
 
     private static string ConvertToMessage(int value) => $"The value is some {value}!";
 
