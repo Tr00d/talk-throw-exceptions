@@ -5,12 +5,12 @@ using Xunit;
 
 namespace TalkThrowExceptionsSnippets.Tests.LinqExample;
 
-public class LinqExample
+public class LinqExampleTest
 {
-    private readonly List<Person> top10Players;
+    private readonly List<Player> top10Players;
 
-    public LinqExample() =>
-        this.top10Players = new List<Person>
+    public LinqExampleTest() =>
+        this.top10Players = new List<Player>
         {
             new("Erling", "Haaland", 10),
             new("Kylian", "Mbappé", 6),
@@ -50,7 +50,7 @@ public class LinqExample
             .Should()
             .BeEquivalentTo("Karim Benzema", "Sadio Mané", "Kevin De Bruyne");
 
-    private record Person(string Firstname, string Lastname, int Rank)
+    private record Player(string Firstname, string Lastname, int Rank)
     {
         public string GetDisplayName() => string.Join(' ', this.Firstname, this.Lastname);
     }
