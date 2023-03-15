@@ -27,7 +27,7 @@ public class GenericInBoxWithMatchTest
             .Be(6);
 
     [Fact]
-    public void Map_ShouldNotExecuteFunction_GivenValueIsNone() =>
+    public void Map_ShouldNotExecuteFunction_GivenValueIsNone_WithMethodGroup() =>
         SchrodingerBox<int>.None()
             .Map(IncrementValue)
             .Map(IncrementValue)
@@ -35,6 +35,26 @@ public class GenericInBoxWithMatchTest
             .Match(_ => _, () => 0)
             .Should()
             .Be(0);
+
+    [Fact]
+    public void Match_ShouldExecuteNoneFunction_GivenValueIsNone() =>
+        SchrodingerBox<int>.None()
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Match(some => $"The value is some {some}!", () => "The value is none")
+            .Should()
+            .Be("The value is none");
+
+    [Fact]
+    public void Match_ShouldExecuteSomeFunction_GivenValueIsSome() =>
+        SchrodingerBox<int>.Some(3)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Match(some => $"The value is some {some}!", () => "The value is none")
+            .Should()
+            .Be("The value is some 3!");
 
     private static int IncrementValue(int value) => value + 1;
 
