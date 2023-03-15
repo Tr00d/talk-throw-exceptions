@@ -9,23 +9,23 @@ public class GenericInBoxTest
     [Fact]
     public void ImperativeEquivalent()
     {
-        var value = 3;
-        if (value != default)
+        int? value = 3;
+        if (value != null)
         {
             value += 1;
         }
 
-        if (value != default)
+        if (value != null)
         {
             value += 1;
         }
 
-        if (value != default)
+        if (value != null)
         {
             value += 1;
         }
 
-        value.Should().Be(3);
+        value.Should().Be(6);
     }
 
     [Fact]
@@ -56,11 +56,11 @@ public class GenericInBoxTest
             .Map(IncrementValue)
             .OpenBox()
             .Should()
-            .Be(default);
+            .BeNull();
 
     private static int IncrementValue(int value) => value + 1;
 
-    internal class SchrodingerBox<T>
+    internal class SchrodingerBox<T> where T : struct
     {
         private bool IsSome { get; }
         private readonly T value;
@@ -84,7 +84,7 @@ public class GenericInBoxTest
         // Creates a box without a value
         public static SchrodingerBox<T> None() => new();
 
-        public T OpenBox() => this.value;
+        public T? OpenBox() => this.IsSome ? this.value : null;
 
         // Creates a box with a value
         public static SchrodingerBox<T> Some(T value) => new(value);
