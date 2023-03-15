@@ -7,28 +7,6 @@ namespace TalkThrowExceptionsSnippets.Tests.GenericInBox;
 public class GenericInBoxTest
 {
     [Fact]
-    public void ImperativeEquivalent()
-    {
-        int? value = 3;
-        if (value != null)
-        {
-            value += 1;
-        }
-
-        if (value != null)
-        {
-            value += 1;
-        }
-
-        if (value != null)
-        {
-            value += 1;
-        }
-
-        value.Should().Be(6);
-    }
-
-    [Fact]
     public void Map_ShouldExecuteFunction_GivenValueIsSome() =>
         SchrodingerBox<int>.Some(3)
             .Map(value => value + 1)
@@ -39,26 +17,14 @@ public class GenericInBoxTest
             .Be(6);
 
     [Fact]
-    public void Map_ShouldExecuteFunction_GivenValueIsSome_WithMethodGroup() =>
-        SchrodingerBox<int>.Some(3)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .OpenBox()
-            .Should()
-            .Be(6);
-
-    [Fact]
     public void Map_ShouldNotExecuteFunction_GivenValueIsNone() =>
         SchrodingerBox<int>.None()
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
+            .Map(value => value + 1)
             .OpenBox()
             .Should()
             .BeNull();
-
-    private static int IncrementValue(int value) => value + 1;
 
     internal class SchrodingerBox<T> where T : struct
     {

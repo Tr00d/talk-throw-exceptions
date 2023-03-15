@@ -7,6 +7,29 @@ namespace TalkThrowExceptionsSnippets.Tests.GenericInBoxWithMatch;
 public class GenericInBoxWithMatchTest
 {
     [Fact]
+    public void ImperativeEquivalent()
+    {
+        int? value = 3;
+        if (value != null)
+        {
+            value += 1;
+        }
+
+        if (value != null)
+        {
+            value += 1;
+        }
+
+        if (value != null)
+        {
+            value += 1;
+        }
+
+        var result = value != null ? value : 0;
+        result.Should().Be(6);
+    }
+
+    [Fact]
     public void Map_ShouldExecuteFunction_GivenValueIsSome() =>
         SchrodingerBox<int>.Some(3)
             .Map(value => value + 1)
@@ -15,26 +38,6 @@ public class GenericInBoxWithMatchTest
             .Match(_ => _, () => 0)
             .Should()
             .Be(6);
-
-    [Fact]
-    public void Map_ShouldExecuteFunction_GivenValueIsSome_WithMethodGroup() =>
-        SchrodingerBox<int>.Some(3)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Match(_ => _, () => 0)
-            .Should()
-            .Be(6);
-
-    [Fact]
-    public void Map_ShouldNotExecuteFunction_GivenValueIsNone_WithMethodGroup() =>
-        SchrodingerBox<int>.None()
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Match(_ => _, () => 0)
-            .Should()
-            .Be(0);
 
     [Fact]
     public void Match_ShouldExecuteNoneFunction_Declarative() =>
