@@ -1,5 +1,6 @@
-using Vonage.Server.Common.Failures;
-using Vonage.Server.Common.Monads;
+using Vonage.Common.Failures;
+using Vonage.Common.Monads;
+using Vonage.Common.Monads.Exceptions;
 
 namespace TalkThrowExceptionsSnippets.Tests.ResultWithException;
 
@@ -18,9 +19,9 @@ public class ResultWithExceptionTest
             var value = result.GetSuccessUnsafe();
             DoSomethingWithValue(value);
         }
-        catch (UnsafeValueException exception)
+        catch (FailureStateException exception)
         {
-            DoSomethingWithFailure(ResultFailure.FromErrorMessage(exception.Message));
+            DoSomethingWithFailure(exception.Failure);
         }
     }
 
