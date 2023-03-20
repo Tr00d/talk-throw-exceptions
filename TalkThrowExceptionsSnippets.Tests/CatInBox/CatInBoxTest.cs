@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
@@ -40,15 +41,15 @@ public class CatInBoxTest
             .ShakeTooHard()
             .Shake();
 
-    private Cat GetAliveCat() => new(this.helper);
+    private Cat GetAliveCat() => new(value => this.helper.WriteLine(value));
 
     internal readonly struct Cat
     {
-        private readonly ITestOutputHelper helper;
+        private readonly Action<string> log;
 
-        public Cat(ITestOutputHelper testOutputHelper) => this.helper = testOutputHelper;
+        public Cat(Action<string> log) => this.log = log;
 
-        public void Meow() => this.helper.WriteLine("Meow");
+        public void Meow() => this.log("Meow");
     }
 
     internal class SchrodingerBox

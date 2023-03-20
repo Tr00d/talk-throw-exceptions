@@ -25,7 +25,7 @@ public class GenericInBoxWithMatchTest
             value += 1;
         }
 
-        var result = value != null ? value : 0;
+        var result = value != null ? value : null;
         result.Should().Be(6);
     }
 
