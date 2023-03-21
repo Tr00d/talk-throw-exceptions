@@ -1,6 +1,7 @@
 module Tests
 
 open Xunit
+open FsUnit.Xunit
 
 let incrementValue value = value + 1
 let convertToMessage value = $"The value is some {value}!"
@@ -12,10 +13,9 @@ let matchResult content =
 
 [<Fact>]
 let ``F# equivalent!`` () =
-    let result = 
-        Some(3)
-        |> Option.map incrementValue
-        |> Option.map incrementValue
-        |> Option.map incrementValue
-        |> matchResult
-    Assert.Equal("The value is some 6!", result)   
+    Some(3)
+    |> Option.map incrementValue
+    |> Option.map incrementValue
+    |> Option.map incrementValue
+    |> matchResult
+    |> should equal "The value is some 6!"
