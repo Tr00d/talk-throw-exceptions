@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TalkThrowExceptionSnippets.Fsharp", "TalkThrowExceptionSnippets.Fsharp\TalkThrowExceptionSnippets.Fsharp.fsproj", "{EF3DBC1A-F688-467A-99CE-E05F22EA5322}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,5 +19,9 @@ Global
 		{6FCE0745-AE1A-4E67-AED5-2001467800D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FCE0745-AE1A-4E67-AED5-2001467800D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6FCE0745-AE1A-4E67-AED5-2001467800D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF3DBC1A-F688-467A-99CE-E05F22EA5322}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF3DBC1A-F688-467A-99CE-E05F22EA5322}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF3DBC1A-F688-467A-99CE-E05F22EA5322}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF3DBC1A-F688-467A-99CE-E05F22EA5322}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
