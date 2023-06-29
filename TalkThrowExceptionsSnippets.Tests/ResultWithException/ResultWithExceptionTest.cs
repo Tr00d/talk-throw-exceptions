@@ -1,6 +1,7 @@
+using System;
+using Vonage.Common.Exceptions;
 using Vonage.Common.Failures;
 using Vonage.Common.Monads;
-using Vonage.Common.Monads.Exceptions;
 
 namespace TalkThrowExceptionsSnippets.Tests.ResultWithException;
 
@@ -19,11 +20,25 @@ public class ResultWithExceptionTest
             var value = result.GetSuccessUnsafe();
             DoSomethingWithValue(value);
         }
-        catch (FailureStateException exception)
+        catch (VonageAuthenticationException exception)
         {
-            DoSomethingWithFailure(exception.Failure);
+            DoSomethingWithVonageAuthenticationException(exception);
+        }
+        catch (VonageHttpRequestException exception)
+        {
+            DoSomethingWithVonageHttpRequestException(exception);
+        }
+        catch (VonageException exception)
+        {
+            DoSomethingWithVonageException(exception);
+        }
+        catch (Exception exception)
+        {
+            DoSomethingWithException(exception);
         }
     }
+
+    private static Unit DoSomethingWithException(Exception exception) => Unit.Default;
 
     private static Unit DoSomethingWithFailure(IResultFailure failure)
     {
@@ -34,4 +49,11 @@ public class ResultWithExceptionTest
     {
         return Unit.Default;
     }
+
+    private static Unit DoSomethingWithVonageAuthenticationException(VonageAuthenticationException exception) =>
+        Unit.Default;
+
+    private static Unit DoSomethingWithVonageException(VonageException exception) => Unit.Default;
+
+    private static Unit DoSomethingWithVonageHttpRequestException(VonageHttpRequestException exception) => Unit.Default;
 }
