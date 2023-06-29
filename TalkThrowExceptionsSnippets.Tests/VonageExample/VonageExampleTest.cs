@@ -15,7 +15,8 @@ public class VonageExampleTest
         var requestId = Guid.NewGuid();
         var code = string.Empty;
         var client = new VonageClient(Credentials.FromApiKeyAndSecret("", ""));
-        var result = await VerifyCodeRequest.Build().WithRequestId(requestId)
+        var result = await VerifyCodeRequest.Build()
+            .WithRequestId(requestId)
             .WithCode(code)
             .Create()
             .BindAsync(request => client.VerifyV2Client.VerifyCodeAsync(request));
