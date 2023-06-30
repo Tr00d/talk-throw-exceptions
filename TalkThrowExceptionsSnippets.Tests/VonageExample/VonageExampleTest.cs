@@ -19,7 +19,8 @@ public class VonageExampleTest
             .WithRequestId(requestId)
             .WithCode(code)
             .Create()
-            .BindAsync(request => client.VerifyV2Client.VerifyCodeAsync(request));
+            .BindAsync(request => 
+                client.VerifyV2Client.VerifyCodeAsync(request));
         result.Match(DoSomethingWithResponse, DoSomethingWithFailure);
     }
 
