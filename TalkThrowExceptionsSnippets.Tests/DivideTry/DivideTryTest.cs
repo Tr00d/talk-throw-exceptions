@@ -24,5 +24,6 @@ public class DivideTryTest
             .Should()
             .BeSuccess(value => value.Should().Be(25));
 
-    private static Try<decimal> Divide(decimal value, decimal divisor) => Try(() => value / divisor);
+    private static Try<decimal> Divide(decimal value, decimal divisor) => 
+        Try(() => value / divisor);
 }
