@@ -9,22 +9,24 @@ public class GenericInBoxWithMatchTest
     [Fact]
     public void ImperativeEquivalent()
     {
+        // Initialize the Box
         int? value = 3;
+        // Map value => value +1
         if (value != null)
         {
             value += 1;
         }
-
+        // Map value => value +1
         if (value != null)
         {
             value += 1;
         }
-
+        // Map value => value +1
         if (value != null)
         {
             value += 1;
         }
-
+        // Open the Box
         var result = value != null ? value : null;
         result.Should().Be(6);
     }
