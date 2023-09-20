@@ -21,13 +21,11 @@ public class WeirdDivideImplementation2 : ICanDivide
 
 public class WeirdDivideImplementation3 : ICanDivide
 {
-	private const int DefaultMagicValue = 785;
 	public decimal Divide(decimal x, decimal y) => y == default ? throw new DivideByZeroException() : x / y;
 }
 
 public class WeirdDivideImplementation4 : ICanDivide
 {
-	private const int DefaultMagicValue = 785;
 	public decimal Divide(decimal x, decimal y) => y == default ? throw new MyCustomException() : x / y;
 
 	public class MyCustomException : Exception
