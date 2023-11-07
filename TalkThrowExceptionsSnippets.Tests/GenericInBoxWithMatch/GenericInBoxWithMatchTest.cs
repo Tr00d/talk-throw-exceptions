@@ -91,7 +91,7 @@ public class GenericInBoxWithMatchTest
 
 	private static int IncrementValue(int value) => value + 1;
 
-	internal class SchrodingerBox<T> where T : struct
+	internal class SchrodingerBox<T>
 	{
 		private bool IsSome { get; }
 		private readonly T value;
