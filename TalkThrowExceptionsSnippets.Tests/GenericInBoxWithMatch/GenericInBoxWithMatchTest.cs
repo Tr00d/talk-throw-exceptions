@@ -107,6 +107,12 @@ public class GenericInBoxWithMatchTest
 		private SchrodingerBox() => this.IsSome = false;
 
 		// Applies the function on the value IF our box contains a value
+		public SchrodingerBox<TResult> Bind<TResult>(Func<T, SchrodingerBox<TResult>> bind) where TResult : struct =>
+			this.IsSome
+				? bind(this.value)
+				: SchrodingerBox<TResult>.None();
+
+		// Applies the function on the value IF our box contains a value
 		public SchrodingerBox<TResult> Map<TResult>(Func<T, TResult> map) where TResult : struct =>
 			this.IsSome
 				? Some(map(this.value))
