@@ -9,9 +9,9 @@ public class GenericInBoxWithBindTest
 	[Fact]
 	public void Bind_ShouldReturnSome1_GivenValueIs8() =>
 		SchrodingerBox<int>.Some(8)
-			.Bind(Half)
-			.Bind(Half)
-			.Bind(Half)
+			.Bind(Half) // becomes Some(4)
+			.Bind(Half) // becomes Some(2)
+			.Bind(Half) // becomes Some(1)
 			.OpenBox()
 			.Should()
 			.Be(1);
@@ -19,15 +19,16 @@ public class GenericInBoxWithBindTest
 	[Fact]
 	public void Bind_ShouldReturnNull_GivenValueIs9() =>
 		SchrodingerBox<int>.Some(9)
-			.Bind(Half)
-			.Bind(Half)
-			.Bind(Half)
+			.Bind(Half) // becomes None
+			.Bind(Half) // remains None
+			.Bind(Half) // remains None
 			.OpenBox()
 			.Should()
 			.Be(null);
 	
-	private static SchrodingerBox<int> Half(int value) => 
-		value % 2 == 0 ? SchrodingerBox<int>.Some(value / 2) : SchrodingerBox<int>.None();
+	private static SchrodingerBox<int> Half(int value) => value % 2 == 0 
+		? SchrodingerBox<int>.Some(value / 2) 
+		: SchrodingerBox<int>.None();
 
 	internal class SchrodingerBox<T> where T : struct
 	{
