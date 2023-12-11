@@ -7,7 +7,7 @@ namespace TalkThrowExceptionsSnippets.Tests.GenericInBox;
 public class GenericInBoxTest
 {
 	[Fact]
-	public void Map_ShouldExecuteFunction_GivenValueIsSome() =>
+	public void Map_ShouldReturnSome6_GivenValueIs3() =>
 		SchrodingerBox<int>.Some(3)
 			.Map(value => value + 1)
 			.Map(value => value + 1)
@@ -17,7 +17,7 @@ public class GenericInBoxTest
 			.Be(6);
 
 	[Fact]
-	public void Map_ShouldNotExecuteFunction_GivenValueIsNone() =>
+	public void Map_ShouldReturnNull_GivenValueIsNone() =>
 		SchrodingerBox<int>.None()
 			.Map(value => value + 1)
 			.Map(value => value + 1)

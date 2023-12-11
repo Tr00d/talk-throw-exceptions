@@ -7,7 +7,7 @@ namespace TalkThrowExceptionsSnippets.Tests.GenericInBoxWithBind;
 public class GenericInBoxWithBindTest
 {
 	[Fact]
-	public void Bind_ShouldReturnSome_GivenValueIsSome() =>
+	public void Bind_ShouldReturnSome1_GivenValueIs8() =>
 		SchrodingerBox<int>.Some(8)
 			.Bind(Half)
 			.Bind(Half)
@@ -17,7 +17,7 @@ public class GenericInBoxWithBindTest
 			.Be(1);
 
 	[Fact]
-	public void Bind_ShouldReturnEmptyBox_GivenValueExceedsThree() =>
+	public void Bind_ShouldReturnNull_GivenValueIs9() =>
 		SchrodingerBox<int>.Some(9)
 			.Bind(Half)
 			.Bind(Half)
