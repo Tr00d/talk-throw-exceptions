@@ -7,28 +7,27 @@ namespace TalkThrowExceptionsSnippets.Tests.GenericInBoxWithBind;
 public class GenericInBoxWithBindTest
 {
 	[Fact]
-	public void Bind_ShouldExecuteFunction_GivenValueIsSome() =>
-		SchrodingerBox<int>.Some(0)
-			.Bind(Increment)
-			.Bind(Increment)
-			.Bind(Increment)
+	public void Bind_ShouldReturnSome_GivenValueIsSome() =>
+		SchrodingerBox<int>.Some(8)
+			.Bind(Half)
+			.Bind(Half)
+			.Bind(Half)
 			.OpenBox()
 			.Should()
-			.Be(3);
+			.Be(1);
 
 	[Fact]
 	public void Bind_ShouldReturnEmptyBox_GivenValueExceedsThree() =>
-		SchrodingerBox<int>.Some(0)
-			.Bind(Increment)
-			.Bind(Increment)
-			.Bind(Increment)
-			.Bind(Increment)
+		SchrodingerBox<int>.Some(9)
+			.Bind(Half)
+			.Bind(Half)
+			.Bind(Half)
 			.OpenBox()
 			.Should()
 			.Be(null);
-
-	private static SchrodingerBox<int> Increment(int value) =>
-		value < 3 ? SchrodingerBox<int>.Some(value + 1) : SchrodingerBox<int>.None();
+	
+	private static SchrodingerBox<int> Half(int value) => 
+		value % 2 == 0 ? SchrodingerBox<int>.Some(value / 2) : SchrodingerBox<int>.None();
 
 	internal class SchrodingerBox<T> where T : struct
 	{
