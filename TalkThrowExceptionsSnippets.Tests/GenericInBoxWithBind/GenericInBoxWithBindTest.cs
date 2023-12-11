@@ -17,11 +17,11 @@ public class GenericInBoxWithBindTest
 			.Be(1);
 
 	[Fact]
-	public void Bind_ShouldReturnNull_GivenValueIs9() =>
-		SchrodingerBox<int>.Some(9)
+	public void Bind_ShouldReturnNull_GivenValueIs4() =>
+		SchrodingerBox<int>.Some(4)
+			.Bind(Half) // becomes Some(2)
+			.Bind(Half) // becomes Some(1)
 			.Bind(Half) // becomes None
-			.Bind(Half) // remains None
-			.Bind(Half) // remains None
 			.OpenBox()
 			.Should()
 			.Be(null);
