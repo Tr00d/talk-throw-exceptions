@@ -44,13 +44,13 @@ public class GenericInBoxWithMatchTest
 			.Bind(value => Half(value))
 			.Match(_ => _, () => 0)
 			.Should()
-			.Be(6);
+			.Be(3);
 	
 	
 
 	[Fact]
-	public void Match_ShouldMatchNoneMessage_Declarative() =>
-		SchrodingerBox<int>.None()
+	public void Match_ShouldMatchNone_Declarative() =>
+		SchrodingerBox<int>.Some(4)
 			.Map(Increment)
 			.Map(Increment)
 			.Map(Increment)
@@ -60,8 +60,8 @@ public class GenericInBoxWithMatchTest
 			.Be(GetNoneMessage());
 
 	[Fact]
-	public void Match_ShouldMatchNoneMessage_GivenValueIsNone() =>
-		SchrodingerBox<int>.None()
+	public void Match_ShouldMatchNone_GivenValueIs4() =>
+		SchrodingerBox<int>.Some(4)
 			.Map(value => value + 1)
 			.Map(value => value + 1)
 			.Map(value => value + 1)
@@ -71,7 +71,7 @@ public class GenericInBoxWithMatchTest
 			.Be("The value is none");
 
 	[Fact]
-	public void Match_ShouldMatchSomeMessage_Declarative() =>
+	public void Match_ShouldMatchSome3_Declarative() =>
 		SchrodingerBox<int>.Some(3)
 			.Map(Increment)
 			.Map(Increment)
@@ -79,17 +79,18 @@ public class GenericInBoxWithMatchTest
 			.Bind(Half)
 			.Match(ConvertToSomeMessage, GetNoneMessage)
 			.Should()
-			.Be(ConvertToSomeMessage(6));
+			.Be(ConvertToSomeMessage(3));
 
 	[Fact]
-	public void Match_ShouldMatchNoneMessage_GivenValueIsSome() =>
+	public void Match_ShouldMatchSome3_GivenValueIs3() =>
 		SchrodingerBox<int>.Some(3)
 			.Map(value => value + 1)
 			.Map(value => value + 1)
 			.Map(value => value + 1)
+			.Bind(value => Half(value))
 			.Match(some => $"The value is some {some}!", () => "The value is none")
 			.Should()
-			.Be("The value is some 6!");
+			.Be("The value is some 3!");
 
 	private static string ConvertToSomeMessage(int value) => $"The value is some {value}!";
 
