@@ -1,0 +1,15 @@
+
+j
+:TalkThrowExceptionsSnippets.Tests/CatInBox/CatInBoxTest.cs,0\f\0fbb1ba230dddf7d86a1e2a5e7c5bb2038e2188c
+r
+BTalkThrowExceptionsSnippets.Tests/GenericInBox/GenericInBoxTest.cs,d\2\d2e70aadecc29ef8265d21989bd97181cb3c32ff
+‚
+RTalkThrowExceptionsSnippets.Tests/GenericInBoxWithBind/GenericInBoxWithBindTest.cs,b\2\b27acfea2683cff57b9a148f87ae6a4347f5768c
+„
+TTalkThrowExceptionsSnippets.Tests/GenericInBoxWithMatch/GenericInBoxWithMatchTest.cs,8\3\8398646da18f52181a17270247e7741d65b33b6e
+r
+BTalkThrowExceptionsSnippets.Tests/DivideEither/DivideEitherTest.cs,6\8\6838ce0e204c5f6319318c3379f2acf3c39d2b04
+t
+DTalkThrowExceptionsSnippets.Tests/DivideExample/DivideExampleTest.cs,0\1\01131ea211a875a7ad74c6b38d1c32e7dc0a6aeb
+l
+<TalkThrowExceptionsSnippets.Tests/DivideTry/DivideTryTest.cs,1\d\1d74b89055e3dc6ef05055954c1a4c06aef6eb6d

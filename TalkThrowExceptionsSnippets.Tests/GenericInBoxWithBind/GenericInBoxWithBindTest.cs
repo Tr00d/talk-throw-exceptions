@@ -9,9 +9,9 @@ public class GenericInBoxWithBindTest
 	[Fact]
 	public void Bind_ShouldReturnSome1_GivenValueIs8() =>
 		SchrodingerBox<int>.Some(8)
-			.Bind(Half) // becomes Some(4)
-			.Bind(Half) // becomes Some(2)
-			.Bind(Half) // becomes Some(1)
+			.Bind(value => Half(value)) // becomes Some(4)
+			.Bind(value => Half(value)) // becomes Some(2)
+			.Bind(value => Half(value)) // becomes Some(1)
 			.OpenBox()
 			.Should()
 			.Be(1);
@@ -19,9 +19,9 @@ public class GenericInBoxWithBindTest
 	[Fact]
 	public void Bind_ShouldReturnNull_GivenValueIs4() =>
 		SchrodingerBox<int>.Some(4)
-			.Bind(Half) // becomes Some(2)
-			.Bind(Half) // becomes Some(1)
-			.Bind(Half) // becomes None
+			.Bind(value => Half(value)) // becomes Some(2)
+			.Bind(value => Half(value)) // becomes Some(1)
+			.Bind(value => Half(value)) // becomes None
 			.OpenBox()
 			.Should()
 			.Be(null);
