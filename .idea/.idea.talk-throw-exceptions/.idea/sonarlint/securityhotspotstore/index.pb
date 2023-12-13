@@ -13,3 +13,7 @@ t
 DTalkThrowExceptionsSnippets.Tests/DivideExample/DivideExampleTest.cs,0\1\01131ea211a875a7ad74c6b38d1c32e7dc0a6aeb
 l
 <TalkThrowExceptionsSnippets.Tests/DivideTry/DivideTryTest.cs,1\d\1d74b89055e3dc6ef05055954c1a4c06aef6eb6d
+\
+,TalkThrowExceptionSnippets.Fsharp/Program.fs,a\7\a77ec4ce1a8ae687fcc30c8a0514ac3b2a700ef5
+Z
+*TalkThrowExceptionSnippets.Fsharp/Tests.fs,4\5\452f5324d2a7fcd67413f481cc7e267bb2a9d813
