@@ -6,116 +6,139 @@ namespace TalkThrowExceptionsSnippets.Tests.GenericInBoxWithMatch;
 
 public class GenericInBoxWithMatchTest
 {
-    [Fact]
-    public void ImperativeEquivalent()
-    {
-        int? value = 3;
-        if (value != null)
-        {
-            value += 1;
-        }
+	[Fact]
+	public void ImperativeEquivalent()
+	{
+		// Initialize the Box
+		int? value = 3;
 
-        if (value != null)
-        {
-            value += 1;
-        }
+		// Map value => value +1
+		if (value != null)
+		{
+			value += 1;
+		}
 
-        if (value != null)
-        {
-            value += 1;
-        }
+		// Map value => value +1
+		if (value != null)
+		{
+			value += 1;
+		}
 
-        var result = value != null ? value : null;
-        result.Should().Be(6);
-    }
+		// Map value => value +1
+		if (value != null)
+		{
+			value += 1;
+		}
 
-    [Fact]
-    public void Map_ShouldExecuteFunction_GivenValueIsSome() =>
-        SchrodingerBox<int>.Some(3)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Match(_ => _, () => 0)
-            .Should()
-            .Be(6);
+		// Open the Box
+		var result = value != null ? value : null;
+		result.Should().Be(6);
+	}
 
-    [Fact]
-    public void Match_ShouldExecuteNoneFunction_Declarative() =>
-        SchrodingerBox<int>.None()
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Match(ConvertToMessage, GetDefaultMessage)
-            .Should()
-            .Be(GetDefaultMessage());
+	[Fact]
+	public void Map_ShouldReturnValue_GivenValueIsSome() =>
+		SchrodingerBox<int>.Some(3)
+			.Map(value => value + 1)
+			.Map(value => value + 1)
+			.Map(value => value + 1)
+			.Bind(value => Half(value))
+			.Match(_ => _, () => 0)
+			.Should()
+			.Be(3);
+	
+	
 
-    [Fact]
-    public void Match_ShouldExecuteNoneFunction_GivenValueIsNone() =>
-        SchrodingerBox<int>.None()
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Match(some => $"The value is some {some}!", () => "The value is none")
-            .Should()
-            .Be("The value is none");
+	[Fact]
+	public void Match_ShouldMatchNone_Declarative() =>
+		SchrodingerBox<int>.Some(4)
+			.Map(Increment)
+			.Map(Increment)
+			.Map(Increment)
+			.Bind(Half)
+			.Match(ConvertToSomeMessage, GetNoneMessage)
+			.Should()
+			.Be(GetNoneMessage());
 
-    [Fact]
-    public void Match_ShouldExecuteSomeFunction_Declarative() =>
-        SchrodingerBox<int>.Some(3)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Map(IncrementValue)
-            .Match(ConvertToMessage, GetDefaultMessage)
-            .Should()
-            .Be(ConvertToMessage(6));
+	[Fact]
+	public void Match_ShouldMatchNone_GivenValueIs4() =>
+		SchrodingerBox<int>.Some(4)
+			.Map(value => value + 1)
+			.Map(value => value + 1)
+			.Map(value => value + 1)
+			.Bind(value => Half(value))
+			.Match(some => $"The value is some {some}!", () => "The value is none")
+			.Should()
+			.Be("The value is none");
 
-    [Fact]
-    public void Match_ShouldExecuteSomeFunction_GivenValueIsSome() =>
-        SchrodingerBox<int>.Some(3)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Map(value => value + 1)
-            .Match(some => $"The value is some {some}!", () => "The value is none")
-            .Should()
-            .Be("The value is some 6!");
+	[Fact]
+	public void Match_ShouldMatchSome3_Declarative() =>
+		SchrodingerBox<int>.Some(3)
+			.Map(Increment)
+			.Map(Increment)
+			.Map(Increment)
+			.Bind(Half)
+			.Match(ConvertToSomeMessage, GetNoneMessage)
+			.Should()
+			.Be(ConvertToSomeMessage(3));
 
-    private static string ConvertToMessage(int value) => $"The value is some {value}!";
+	[Fact]
+	public void Match_ShouldMatchSome3_GivenValueIs3() =>
+		SchrodingerBox<int>.Some(3)
+			.Map(value => value + 1)
+			.Map(value => value + 1)
+			.Map(value => value + 1)
+			.Bind(value => Half(value))
+			.Match(some => $"The value is some {some}!", () => "The value is none")
+			.Should()
+			.Be("The value is some 3!");
 
-    private static string GetDefaultMessage() => "The value is none";
+	private static string ConvertToSomeMessage(int value) => $"The value is some {value}!";
 
-    private static int IncrementValue(int value) => value + 1;
+	private static string GetNoneMessage() => "The value is none";
 
-    internal class SchrodingerBox<T> where T : struct
-    {
-        private bool IsSome { get; }
-        private readonly T value;
+	private static int Increment(int value) => value + 1;
 
-        // Constructor for Some
-        private SchrodingerBox(T value)
-        {
-            this.value = value;
-            this.IsSome = true;
-        }
+	private static SchrodingerBox<int> Half(int value) => value % 2 == 0
+		? SchrodingerBox<int>.Some(value / 2)
+		: SchrodingerBox<int>.None();
 
-        // Constructor for None
-        private SchrodingerBox() => this.IsSome = false;
+	internal class SchrodingerBox<T>
+	{
+		private bool IsSome { get; }
+		private readonly T value;
 
-        // Applies the function on the value IF our box contains a value
-        public SchrodingerBox<T> Map(Func<T, T> map) =>
-            this.IsSome
-                ? Some(map(this.value))
-                : None();
+		// Constructor for Some
+		private SchrodingerBox(T value)
+		{
+			this.value = value;
+			this.IsSome = true;
+		}
 
-        // Applies a function depending on the state of the box to return a TResponse
-        public TResponse Match<TResponse>(Func<T, TResponse> some, Func<TResponse> none) =>
-            this.IsSome
-                ? some(this.value)
-                : none();
+		// Constructor for None
+		private SchrodingerBox() => this.IsSome = false;
 
-        // Creates a box without a value
-        public static SchrodingerBox<T> None() => new();
+		// Applies the function on the value IF our box contains a value
+		public SchrodingerBox<TResult> Bind<TResult>(Func<T, SchrodingerBox<TResult>> bind) where TResult : struct =>
+			this.IsSome
+				? bind(this.value)
+				: SchrodingerBox<TResult>.None();
 
-        // Creates a box with a value
-        public static SchrodingerBox<T> Some(T value) => new(value);
-    }
+		// Applies the function on the value IF our box contains a value
+		public SchrodingerBox<TResult> Map<TResult>(Func<T, TResult> map) where TResult : struct =>
+			this.IsSome
+				? Some(map(this.value))
+				: SchrodingerBox<TResult>.None();
+
+		// Applies a function depending on the state of the box to return a TResponse
+		public TResponse Match<TResponse>(Func<T, TResponse> some, Func<TResponse> none) =>
+			this.IsSome
+				? some(this.value)
+				: none();
+
+		// Creates a box without a value
+		public static SchrodingerBox<T> None() => new();
+
+		// Creates a box with a value
+		public static SchrodingerBox<TResult> Some<TResult>(TResult value) where TResult : struct => new(value);
+	}
 }
