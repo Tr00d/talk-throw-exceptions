@@ -17,14 +17,46 @@ public class UserService
             throw new ArgumentException("Cannot be null or empty", nameof(email));
         }
 
-        return this.dataStore.FirstOrDefault(user => user.Email == email);
+        return this.dataStore.FirstOrDefault(user => user.MatchesEmail(email));
     }
 
     [Fact]
     public void Usage()
     {
         var service = new UserService();
-        var user = service.FindUser("guillaume.faas@vonage.com");
+        string email = "guillaume.faas@vonage.com";
+        try
+        {
+            var user = service.FindUser(email);
+            if (user is null)
+            {
+                this.UserMissing(email);
+            }
+            else
+            {
+                this.UserFound(user);
+            }
+        }
+        catch (Exception oops)
+        {
+            this.ValidationFailed(oops);
+        }
+        
+    }
+
+    private void ValidationFailed(Exception exception)
+    {
+        
+    }
+
+    private void UserMissing(string email)
+    {
+        
+    }
+
+    private void UserFound(User user)
+    {
+        
     }
 }
 
@@ -100,4 +132,7 @@ public class UserServiceMonad
     public record MissingUser(string Reason) : Error(Reason);
 }
 
-public record User(string Email);
+public record User(string Email)
+{
+    public bool MatchesEmail(string email) => this.Email == email;
+};
