@@ -19,34 +19,35 @@ npm run typecheck  # type-check only
 
 ## The system
 
-`Onboarding.processNewHires(...departments)` goes through a list of departments
-and onboards the approved candidate of each one. For a single department there
-are three steps, each depending on the previous one:
+`Onboarding.onboardNewHire(offer)` onboards a single new hire through four
+sequential steps, each depending on the previous one:
 
-1. Find the approved candidate for the department (`CandidateRepository`).
+1. Register the employee from the accepted offer (`EmployeeRepository`).
 2. Generate their contract (`HrSystem`).
 3. Provision their IT account (`ItProvisioning`).
+4. Enroll them in payroll (`Payroll`).
 
-If all three succeed, a confirmation string is added to the result. The method
-returns the confirmations for every department that completed all three steps.
+If all four succeed, the method returns an `OnboardingResult`.
 
 ## The problem
 
 The code in `src/onboarding.ts` works on the happy path but has several issues:
 
-- Every step returns `T | null`. A null candidate, a null contract, and a null
-  account are three different failures, but the caller can't tell them apart.
-- When a step returns null, the department is skipped with no record and no
-  report. The result list is just shorter and there's no way to know why.
-- Error handling is inconsistent. The "no departments" case throws, the other
-  three fail silently.
-- The three steps are written as nested `if` blocks.
-- The return type is `string[]`, so it can only describe what succeeded, not
-  what failed.
+- Each step signals failure by throwing a typed error
+  (`EmployeeRegistrationException`, `ContractGenerationException`,
+  `AccountProvisioningException`, `PayrollEnrollmentException`). Failure travels
+  out of band instead of being part of the result.
+- The signature (`onboardNewHire(offer): OnboardingResult`) only describes
+  success. Nothing in the type tells the caller the call can fail.
+- Control flow runs through `try` / `catch`. The four steps live in one `try`
+  block followed by a chain of near-identical `instanceof` checks.
+- Every branch does the same thing: rethrow as a generic
+  `BusinessException(message)`. The four distinct failures collapse into one
+  type, and the caller can only tell them apart by parsing a message string.
 
-The test suite in `tests/onboarding.test.ts` shows the consequence: three
-different failures all assert the same empty result. The tests can't tell the
-failures apart because the code can't either.
+The test suite in `tests/onboarding.test.ts` shows the consequence: four
+different failures all assert the same `BusinessException`. The tests can only
+tell the failures apart by their message.
 
 ## The exercise
 
@@ -61,13 +62,13 @@ Use whichever you prefer.
 
 Some directions:
 
-- A lookup that may return nothing maps to `Option` (`Some` / `None`).
 - A step that succeeds or fails with a reason maps to `Either` (`Right` for
-  success, `Left` for a typed failure). Model the failure reasons explicitly
-  instead of using null.
-- Chaining dependent steps that can stop early is `chain` / `flatMap`, which
-  replaces the nested `if` blocks.
-- Processing the list of departments where each returns an outcome is
-  `traverse` / `sequence`. Decide whether one failing department aborts
-  everything or whether you collect every outcome.
+  success, `Left` for a typed failure). Return the failure as a value instead of
+  throwing an error.
+- Model the four failure reasons explicitly so the caller can tell them apart,
+  instead of collapsing them into one `BusinessException`.
+- Chaining dependent steps that stop on the first failure is `chain` /
+  `flatMap`, which replaces the `try` / `catch`.
+- Make the signature honest: the return type should express "an
+  `OnboardingResult` or a typed failure," not just the success shape.
 - Once failures are typed, update the tests to assert which failure occurred.
