@@ -60,7 +60,7 @@ monads from an existing library:
 
 Use whichever you prefer.
 
-Some directions:
+## Hints:
 
 - A step that succeeds or fails with a reason maps to `Either` (`Right` for
   success, `Left` for a typed failure). Return the failure as a value instead of

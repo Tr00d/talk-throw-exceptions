@@ -28,12 +28,48 @@ export interface OnboardingResult {
   readonly enrolledAt: Date;
 }
 
-export class BusinessException extends Error {}
+export interface EmployeeRegistrationError {
+  readonly _tag: "EmployeeRegistrationError";
+  readonly reason: string;
+}
 
-export class EmployeeRegistrationException extends Error {}
+export interface ContractGenerationError {
+  readonly _tag: "ContractGenerationError";
+  readonly reason: string;
+}
 
-export class ContractGenerationException extends Error {}
+export interface AccountProvisioningError {
+  readonly _tag: "AccountProvisioningError";
+  readonly reason: string;
+}
 
-export class AccountProvisioningException extends Error {}
+export interface PayrollEnrollmentError {
+  readonly _tag: "PayrollEnrollmentError";
+  readonly reason: string;
+}
 
-export class PayrollEnrollmentException extends Error {}
+export type OnboardingError =
+  | EmployeeRegistrationError
+  | ContractGenerationError
+  | AccountProvisioningError
+  | PayrollEnrollmentError;
+
+export const employeeRegistrationError = (reason: string): EmployeeRegistrationError => ({
+  _tag: "EmployeeRegistrationError",
+  reason,
+});
+
+export const contractGenerationError = (reason: string): ContractGenerationError => ({
+  _tag: "ContractGenerationError",
+  reason,
+});
+
+export const accountProvisioningError = (reason: string): AccountProvisioningError => ({
+  _tag: "AccountProvisioningError",
+  reason,
+});
+
+export const payrollEnrollmentError = (reason: string): PayrollEnrollmentError => ({
+  _tag: "PayrollEnrollmentError",
+  reason,
+});

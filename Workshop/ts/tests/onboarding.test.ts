@@ -1,3 +1,4 @@
+import * as E from "fp-ts/Either";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Onboarding } from "../src/onboarding.js";
 import type {
@@ -14,11 +15,10 @@ import type {
   OnboardingResult,
 } from "../src/models.js";
 import {
-  AccountProvisioningException,
-  BusinessException,
-  ContractGenerationException,
-  EmployeeRegistrationException,
-  PayrollEnrollmentException,
+  accountProvisioningError,
+  contractGenerationError,
+  employeeRegistrationError,
+  payrollEnrollmentError,
 } from "../src/models.js";
 
 // ── Test data ─────────────────────────────────────────────────────────────
@@ -41,79 +41,65 @@ const EnrollmentResult: OnboardingResult = {
   enrolledAt: new Date(2024, 0, 15),
 };
 
+const registrationError = employeeRegistrationError("Duplicate employee record");
+const contractError = contractGenerationError("Missing salary band");
+const provisioningError = accountProvisioningError("Login already taken");
+const enrollmentError = payrollEnrollmentError("Payroll system unavailable");
+
 describe("Onboarding", () => {
   let employees: EmployeeRepository;
   let hr: HrSystem;
-  let it_: ItProvisioning;
+  let itProvisioning: ItProvisioning;
   let payroll: Payroll;
   let onboarding: Onboarding;
 
   beforeEach(() => {
-    employees = { register: vi.fn().mockReturnValue(RegisteredEmployee) };
-    hr = { generateContract: vi.fn().mockReturnValue(GeneratedContract) };
-    it_ = { provisionAccount: vi.fn().mockReturnValue(ProvisionedAccount) };
-    payroll = { enroll: vi.fn().mockReturnValue(EnrollmentResult) };
-    onboarding = new Onboarding(employees, hr, it_, payroll);
+    employees = { register: vi.fn().mockReturnValue(E.right(RegisteredEmployee)) };
+    hr = { generateContract: vi.fn().mockReturnValue(E.right(GeneratedContract)) };
+    itProvisioning = { provisionAccount: vi.fn().mockReturnValue(E.right(ProvisionedAccount)) };
+    payroll = { enroll: vi.fn().mockReturnValue(E.right(EnrollmentResult)) };
+    onboarding = new Onboarding(employees, hr, itProvisioning, payroll);
   });
 
   // ── Happy path ────────────────────────────────────────────────────────────
 
-  it("should return enrollment when all steps succeed", () => {
-    vi.mocked(employees.register).mockReturnValue(RegisteredEmployee);
-    vi.mocked(hr.generateContract).mockReturnValue(GeneratedContract);
-    vi.mocked(it_.provisionAccount).mockReturnValue(ProvisionedAccount);
-    vi.mocked(payroll.enroll).mockReturnValue(EnrollmentResult);
-
+  it("should return onboarding result when all steps succeed", () => {
     const result = onboarding.onboardNewHire(Offer);
 
-    expect(result).toEqual(EnrollmentResult);
+    expect(result).toEqual(E.right(EnrollmentResult));
   });
 
   // ── Failure paths ─────────────────────────────────────────────────────────
 
-  it("should throw business exception when employee registration fails", () => {
-    vi.mocked(employees.register).mockImplementation(() => {
-      throw new EmployeeRegistrationException("Duplicate employee record");
-    });
+  it("should return registration error when registration fails", () => {
+    vi.mocked(employees.register).mockReturnValue(E.left(registrationError));
 
-    expect(() => onboarding.onboardNewHire(Offer)).toThrow(
-      new BusinessException("Duplicate employee record"),
-    );
+    const result = onboarding.onboardNewHire(Offer);
+
+    expect(result).toEqual(E.left(registrationError));
   });
 
-  it("should throw business exception when contract generation fails", () => {
-    vi.mocked(employees.register).mockReturnValue(RegisteredEmployee);
-    vi.mocked(hr.generateContract).mockImplementation(() => {
-      throw new ContractGenerationException("Missing salary band");
-    });
+  it("should return contract generation error when contract generation fails", () => {
+    vi.mocked(hr.generateContract).mockReturnValue(E.left(contractError));
 
-    expect(() => onboarding.onboardNewHire(Offer)).toThrow(
-      new BusinessException("Missing salary band"),
-    );
+    const result = onboarding.onboardNewHire(Offer);
+
+    expect(result).toEqual(E.left(contractError));
   });
 
-  it("should throw business exception when account provisioning fails", () => {
-    vi.mocked(employees.register).mockReturnValue(RegisteredEmployee);
-    vi.mocked(hr.generateContract).mockReturnValue(GeneratedContract);
-    vi.mocked(it_.provisionAccount).mockImplementation(() => {
-      throw new AccountProvisioningException("Login already taken");
-    });
+  it("should return account provisioning error when account provisioning fails", () => {
+    vi.mocked(itProvisioning.provisionAccount).mockReturnValue(E.left(provisioningError));
 
-    expect(() => onboarding.onboardNewHire(Offer)).toThrow(
-      new BusinessException("Login already taken"),
-    );
+    const result = onboarding.onboardNewHire(Offer);
+
+    expect(result).toEqual(E.left(provisioningError));
   });
 
-  it("should throw business exception when payroll enrollment fails", () => {
-    vi.mocked(employees.register).mockReturnValue(RegisteredEmployee);
-    vi.mocked(hr.generateContract).mockReturnValue(GeneratedContract);
-    vi.mocked(it_.provisionAccount).mockReturnValue(ProvisionedAccount);
-    vi.mocked(payroll.enroll).mockImplementation(() => {
-      throw new PayrollEnrollmentException("Payroll system unavailable");
-    });
+  it("should return payroll enrollment error when payroll enrollment fails", () => {
+    vi.mocked(payroll.enroll).mockReturnValue(E.left(enrollmentError));
 
-    expect(() => onboarding.onboardNewHire(Offer)).toThrow(
-      new BusinessException("Payroll system unavailable"),
-    );
+    const result = onboarding.onboardNewHire(Offer);
+
+    expect(result).toEqual(E.left(enrollmentError));
   });
 });
