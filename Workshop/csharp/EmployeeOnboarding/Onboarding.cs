@@ -3,33 +3,33 @@ using EmployeeOnboarding.Models;
 
 namespace EmployeeOnboarding;
 
-public class Onboarding(
-    ICandidateRepository candidates,
-    IHrSystem hr,
-    IItProvisioning it)
+public class Onboarding(IEmployeeRepository employees, IHrSystem hr, IItProvisioning it, IPayroll payroll)
 {
-    public List<string> ProcessNewHires(params Department[] departments)
+    public OnboardingResult OnboardNewHire(AcceptedOffer offer)
     {
-        if (!departments.Any())
-            throw new ArgumentException("No departments to process!");
-
-        var results = new List<string>();
-
-        foreach (var dept in departments)
+        try
         {
-            var candidate = candidates.FindApprovedCandidate(dept);
-            if (candidate is not null)
-            {
-                var contract = hr.GenerateContract(candidate);
-                if (contract is not null)
-                {
-                    var account = it.ProvisionAccount(candidate.Email);
-                    if (account is not null)
-                        results.Add($"Onboarded: {account.Name} is ready to start!");
-                }
-            }
+            var employee = employees.Register(offer);
+            var contract = hr.GenerateContract(employee);
+            var account = it.ProvisionAccount(contract);
+            var enrollment = payroll.Enroll(account);
+            return enrollment;
         }
-
-        return results;
+        catch (EmployeeRegistrationException e)
+        {
+            throw new BusinessException(e.Message);
+        }
+        catch (ContractGenerationException e)
+        {
+            throw new BusinessException(e.Message);
+        }
+        catch (AccountProvisioningException e)
+        {
+            throw new BusinessException(e.Message);
+        }
+        catch (PayrollEnrollmentException e)
+        {
+            throw new BusinessException(e.Message);
+        }
     }
 }

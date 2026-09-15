@@ -2,114 +2,98 @@ using EmployeeOnboarding.Externals;
 using EmployeeOnboarding.Models;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace EmployeeOnboarding.Tests;
 
 public class OnboardingTests
 {
-    private readonly ICandidateRepository _candidates = Substitute.For<ICandidateRepository>();
+    // ── Test data ─────────────────────────────────────────────────────────────
+    private static readonly AcceptedOffer Offer = new()
+        { Name = "Alice", Email = "alice@corp.com", Department = "Engineering", StartDate = new DateTime(2024, 1, 15) };
+
+    private static readonly Employee RegisteredEmployee = new() { Id = 1, Name = "Alice", Email = "alice@corp.com" };
+
+    private static readonly Contract GeneratedContract = new()
+        { Id = 100, EmployeeId = 1, StartDate = new DateTime(2024, 1, 15) };
+
+    private static readonly Account ProvisionedAccount = new() { EmployeeId = 1, Login = "alice.corp" };
+
+    private static readonly OnboardingResult EnrollmentResult = new()
+        { EmployeeId = 1, Login = "alice.corp", EnrolledAt = new DateTime(2024, 1, 15) };
+
+    private readonly IEmployeeRepository _employees = Substitute.For<IEmployeeRepository>();
     private readonly IHrSystem _hr = Substitute.For<IHrSystem>();
     private readonly IItProvisioning _it = Substitute.For<IItProvisioning>();
     private readonly Onboarding _onboarding;
-
-    // ── Test data ─────────────────────────────────────────────────────────────
-    private static readonly Department Engineering = new("Engineering");
-    private static readonly Department Marketing   = new("Marketing");
-
-    private static readonly Candidate Alice        = new("Alice", "alice@corp.com");
-    private static readonly Candidate Bob          = new("Bob",   "bob@corp.com");
-
-    private static readonly Contract AliceContract = new("Alice", "alice@corp.com");
-    private static readonly Contract BobContract   = new("Bob",   "bob@corp.com");
-
-    private static readonly Account AliceAccount   = new("Alice", "alice.corp");
-    private static readonly Account BobAccount     = new("Bob",   "bob.corp");
+    private readonly IPayroll _payroll = Substitute.For<IPayroll>();
 
     public OnboardingTests()
     {
-        _onboarding = new Onboarding(_candidates, _hr, _it);
+        _onboarding = new Onboarding(_employees, _hr, _it, _payroll);
     }
 
     // ── Happy path ────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Should_onboard_candidate_when_all_steps_succeed()
+    public void Should_return_enrollment_when_all_steps_succeed()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns(AliceContract);
-        _it.ProvisionAccount(Alice.Email).Returns(AliceAccount);
+        _employees.Register(Offer).Returns(RegisteredEmployee);
+        _hr.GenerateContract(RegisteredEmployee).Returns(GeneratedContract);
+        _it.ProvisionAccount(GeneratedContract).Returns(ProvisionedAccount);
+        _payroll.Enroll(ProvisionedAccount).Returns(EnrollmentResult);
 
-        var result = _onboarding.ProcessNewHires(Engineering);
+        var result = _onboarding.OnboardNewHire(Offer);
 
-        result.Should().ContainSingle()
-            .Which.Should().Be("Onboarded: Alice is ready to start!");
+        result.Should().Be(EnrollmentResult);
+    }
+
+    // ── Failure paths ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Should_throw_business_exception_when_employee_registration_fails()
+    {
+        _employees.Register(Offer).Throws(new EmployeeRegistrationException("Duplicate employee record"));
+
+        var act = () => _onboarding.OnboardNewHire(Offer);
+
+        act.Should().Throw<BusinessException>().WithMessage("Duplicate employee record");
     }
 
     [Fact]
-    public void Should_process_multiple_departments()
+    public void Should_throw_business_exception_when_contract_generation_fails()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns(AliceContract);
-        _it.ProvisionAccount(Alice.Email).Returns(AliceAccount);
+        _employees.Register(Offer).Returns(RegisteredEmployee);
+        _hr.GenerateContract(RegisteredEmployee).Throws(new ContractGenerationException("Missing salary band"));
 
-        _candidates.FindApprovedCandidate(Marketing).Returns(Bob);
-        _hr.GenerateContract(Bob).Returns(BobContract);
-        _it.ProvisionAccount(Bob.Email).Returns(BobAccount);
+        var act = () => _onboarding.OnboardNewHire(Offer);
 
-        var result = _onboarding.ProcessNewHires(Engineering, Marketing);
-
-        result.Should().HaveCount(2)
-            .And.Contain("Onboarded: Alice is ready to start!")
-            .And.Contain("Onboarded: Bob is ready to start!");
-    }
-
-    // ── Failure paths — currently SILENT ─────────────────────────────────────
-    // These tests document what the code does TODAY.
-    // Your goal: make each failure case explicit in the output.
-
-    [Fact]
-    public void Should_throw_when_no_departments_provided()
-    {
-        var act = () => _onboarding.ProcessNewHires();
-
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("No departments to process!");
+        act.Should().Throw<BusinessException>().WithMessage("Missing salary band");
     }
 
     [Fact]
-    public void Should_silently_skip_when_no_approved_candidate()
+    public void Should_throw_business_exception_when_account_provisioning_fails()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns((Candidate?)null);
+        _employees.Register(Offer).Returns(RegisteredEmployee);
+        _hr.GenerateContract(RegisteredEmployee).Returns(GeneratedContract);
+        _it.ProvisionAccount(GeneratedContract).Throws(new AccountProvisioningException("Login already taken"));
 
-        var result = _onboarding.ProcessNewHires(Engineering);
+        var act = () => _onboarding.OnboardNewHire(Offer);
 
-        // ⚠️ Silent! The caller has no idea why Engineering was skipped.
-        result.Should().BeEmpty();
+        act.Should().Throw<BusinessException>().WithMessage("Login already taken");
     }
 
     [Fact]
-    public void Should_silently_skip_when_contract_generation_fails()
+    public void Should_throw_business_exception_when_payroll_enrollment_fails()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns((Contract?)null);
+        _employees.Register(Offer).Returns(RegisteredEmployee);
+        _hr.GenerateContract(RegisteredEmployee).Returns(GeneratedContract);
+        _it.ProvisionAccount(GeneratedContract).Returns(ProvisionedAccount);
+        _payroll.Enroll(ProvisionedAccount).Throws(new PayrollEnrollmentException("Payroll system unavailable"));
 
-        var result = _onboarding.ProcessNewHires(Engineering);
+        var act = () => _onboarding.OnboardNewHire(Offer);
 
-        // ⚠️ Silent! Indistinguishable from the case above.
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Should_silently_skip_when_it_provisioning_fails()
-    {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns(AliceContract);
-        _it.ProvisionAccount(Alice.Email).Returns((Account?)null);
-
-        var result = _onboarding.ProcessNewHires(Engineering);
-
-        // ⚠️ Silent! Three different failures, one indistinguishable outcome.
-        result.Should().BeEmpty();
+        act.Should().Throw<BusinessException>().WithMessage("Payroll system unavailable");
     }
 }

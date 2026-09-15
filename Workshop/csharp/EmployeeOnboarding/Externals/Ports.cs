@@ -2,17 +2,22 @@ using EmployeeOnboarding.Models;
 
 namespace EmployeeOnboarding.Externals;
 
-public interface ICandidateRepository
+public interface IEmployeeRepository
 {
-    Candidate? FindApprovedCandidate(Department dept);
+    Employee Register(AcceptedOffer offer);
 }
 
 public interface IHrSystem
 {
-    Contract? GenerateContract(Candidate candidate);
+    Contract GenerateContract(Employee employee);
 }
 
 public interface IItProvisioning
 {
-    Account? ProvisionAccount(string email);
+    Account ProvisionAccount(Contract contract);
+}
+
+public interface IPayroll
+{
+    OnboardingResult Enroll(Account account);
 }
