@@ -18,36 +18,36 @@ dotnet build  # build only
 
 ## The system
 
-`Onboarding.ProcessNewHires(params Department[] departments)` goes through a
-list of departments and onboards the approved candidate of each one. For a
-single department there are three steps, each depending on the previous one:
+`Onboarding.OnboardNewHire(AcceptedOffer offer)` onboards a single new hire
+through four sequential steps, each depending on the previous one:
 
-1. Find the approved candidate for the department (`ICandidateRepository`).
+1. Register the employee from the accepted offer (`IEmployeeRepository`).
 2. Generate their contract (`IHrSystem`).
 3. Provision their IT account (`IItProvisioning`).
+4. Enroll them in payroll (`IPayroll`).
 
-If all three succeed, a confirmation string is added to the result. The method
-returns the confirmations for every department that completed all three steps.
+If all four succeed, the method returns an `OnboardingResult`.
 
 ## The problem
 
 The code in `EmployeeOnboarding/Onboarding.cs` works on the happy path but has
 several issues:
 
-- Every step returns a nullable (`Candidate?`, `Contract?`, `Account?`). A
-  missing candidate, a missing contract, and a missing account are three
-  different failures, but the caller can't tell them apart.
-- When a step returns null, the department is skipped with no record and no
-  report. The result list is just shorter and there's no way to know why.
-- Error handling is inconsistent. The "no departments" case throws an
-  `ArgumentException`, the other three fail silently.
-- The three steps are written as nested `if` blocks.
-- The return type is `List<string>`, so it can only describe what succeeded, not
-  what failed.
+- Each step signals failure by throwing a typed exception
+  (`EmployeeRegistrationException`, `ContractGenerationException`,
+  `AccountProvisioningException`, `PayrollEnrollmentException`). Failure travels
+  out of band instead of being part of the result.
+- The signature (`OnboardingResult OnboardNewHire(AcceptedOffer)`) only
+  describes success. Nothing in the type tells the caller the call can fail.
+- Control flow runs through `try` / `catch`. The four steps live in one `try`
+  block followed by four near-identical `catch` clauses.
+- Every `catch` does the same thing: rethrow as a generic
+  `BusinessException(e.Message)`. The four distinct failures collapse into one
+  type, and the caller can only tell them apart by parsing a message string.
 
 The test suite in `EmployeeOnboarding.Tests/OnboardingTests.cs` shows the
-consequence: three different failures all assert the same empty result. The
-tests can't tell the failures apart because the code can't either.
+consequence: four different failures all assert the same `BusinessException`.
+The tests can only tell the failures apart by their message.
 
 ## The exercise
 
@@ -64,13 +64,13 @@ Use whichever you prefer.
 
 ## Hints
 
-- A lookup that may return nothing maps to `Option` / `Maybe` (`Some` / `None`).
 - A step that succeeds or fails with a reason maps to `Either` / `Result`
-  (success vs. a typed failure). Model the failure reasons explicitly instead of
-  using null.
-- Chaining dependent steps that can stop early is `Bind` / `Map`, which replaces
-  the nested `if` blocks.
-- Processing the list of departments where each returns an outcome is
-  `Traverse` / `Sequence`. Decide whether one failing department aborts
-  everything or whether you collect every outcome.
+  (success vs. a typed failure). Return the failure as a value instead of
+  throwing an exception.
+- Model the four failure reasons explicitly so the caller can tell them apart,
+  instead of collapsing them into one `BusinessException`.
+- Chaining dependent steps that stop on the first failure is `Bind` / `Map`,
+  which replaces the `try` / `catch`.
+- Make the signature honest: the return type should express "an
+  `OnboardingResult` or a typed failure," not just the success shape.
 - Once failures are typed, update the tests to assert which failure occurred.
