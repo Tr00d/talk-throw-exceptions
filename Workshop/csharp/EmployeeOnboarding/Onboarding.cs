@@ -1,35 +1,22 @@
 using EmployeeOnboarding.Externals;
 using EmployeeOnboarding.Models;
+using LanguageExt;
 
 namespace EmployeeOnboarding;
 
-public class Onboarding(
-    ICandidateRepository candidates,
-    IHrSystem hr,
-    IItProvisioning it)
+public class Onboarding(IEmployeeRepository employees, IHrSystem hr, IItProvisioning it, IPayroll payroll)
 {
-    public List<string> ProcessNewHires(params Department[] departments)
-    {
-        if (!departments.Any())
-            throw new ArgumentException("No departments to process!");
+    public Either<Error, OnboardingResult> OnboardNewHire(AcceptedOffer offer) =>
+        RegisterEmployee(offer)
+            .Bind(GenerateContract())
+            .Bind(ProvisionAccount())
+            .Bind(EnrollAccount());
 
-        var results = new List<string>();
+    private Func<Account, Either<Error, OnboardingResult>> EnrollAccount() => payroll.Enroll;
 
-        foreach (var dept in departments)
-        {
-            var candidate = candidates.FindApprovedCandidate(dept);
-            if (candidate is not null)
-            {
-                var contract = hr.GenerateContract(candidate);
-                if (contract is not null)
-                {
-                    var account = it.ProvisionAccount(candidate.Email);
-                    if (account is not null)
-                        results.Add($"Onboarded: {account.Name} is ready to start!");
-                }
-            }
-        }
+    private Func<Contract, Either<Error, Account>> ProvisionAccount() => it.ProvisionAccount;
 
-        return results;
-    }
+    private Func<Employee, Either<Error, Contract>> GenerateContract() => hr.GenerateContract;
+
+    private Either<Error, Employee> RegisterEmployee(AcceptedOffer offer) => employees.Register(offer);
 }

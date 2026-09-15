@@ -1,18 +1,24 @@
 using EmployeeOnboarding.Models;
+using LanguageExt;
 
 namespace EmployeeOnboarding.Externals;
 
-public interface ICandidateRepository
+public interface IEmployeeRepository
 {
-    Candidate? FindApprovedCandidate(Department dept);
+    Either<Error, Employee> Register(AcceptedOffer offer);
 }
 
 public interface IHrSystem
 {
-    Contract? GenerateContract(Candidate candidate);
+    Either<Error, Contract> GenerateContract(Employee employee);
 }
 
 public interface IItProvisioning
 {
-    Account? ProvisionAccount(string email);
+    Either<Error, Account> ProvisionAccount(Contract contract);
+}
+
+public interface IPayroll
+{
+    Either<Error, OnboardingResult> Enroll(Account account);
 }

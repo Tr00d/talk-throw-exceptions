@@ -1,6 +1,7 @@
 using EmployeeOnboarding.Externals;
 using EmployeeOnboarding.Models;
 using FluentAssertions;
+using FluentAssertions.LanguageExt;
 using NSubstitute;
 using Xunit;
 
@@ -8,108 +9,85 @@ namespace EmployeeOnboarding.Tests;
 
 public class OnboardingTests
 {
-    private readonly ICandidateRepository _candidates = Substitute.For<ICandidateRepository>();
-    private readonly IHrSystem _hr = Substitute.For<IHrSystem>();
-    private readonly IItProvisioning _it = Substitute.For<IItProvisioning>();
-    private readonly Onboarding _onboarding;
+    private static readonly AcceptedOffer Offer = new()
+        { Name = "Alice", Email = "alice@corp.com", Department = "Engineering", StartDate = new DateTime(2024, 1, 15) };
 
-    // ── Test data ─────────────────────────────────────────────────────────────
-    private static readonly Department Engineering = new("Engineering");
-    private static readonly Department Marketing   = new("Marketing");
+    private static readonly Employee RegisteredEmployee = new() { Id = 1, Name = "Alice", Email = "alice@corp.com" };
 
-    private static readonly Candidate Alice        = new("Alice", "alice@corp.com");
-    private static readonly Candidate Bob          = new("Bob",   "bob@corp.com");
+    private static readonly Contract GeneratedContract = new()
+        { Id = 100, EmployeeId = 1, StartDate = new DateTime(2024, 1, 15) };
 
-    private static readonly Contract AliceContract = new("Alice", "alice@corp.com");
-    private static readonly Contract BobContract   = new("Bob",   "bob@corp.com");
+    private static readonly Account ProvisionedAccount = new() { EmployeeId = 1, Login = "alice.corp" };
 
-    private static readonly Account AliceAccount   = new("Alice", "alice.corp");
-    private static readonly Account BobAccount     = new("Bob",   "bob.corp");
+    private static readonly OnboardingResult EnrollmentResult = new()
+        { EmployeeId = 1, Login = "alice.corp", EnrolledAt = new DateTime(2024, 1, 15) };
+
+    private readonly AccountProvisioningError accountProvisioningError = new("Login already taken");
+    private readonly ContractGenerationError contractGenerationError = new("Missing salary band");
+
+    private readonly IEmployeeRepository employees = Substitute.For<IEmployeeRepository>();
+    private readonly IHrSystem hr = Substitute.For<IHrSystem>();
+    private readonly IItProvisioning it = Substitute.For<IItProvisioning>();
+    private readonly Onboarding onboarding;
+    private readonly IPayroll payroll = Substitute.For<IPayroll>();
+    private readonly PayrollEnrollmentError payrollEnrollmentError = new("Payroll system unavailable");
+    private readonly EmployeeRegistrationError registrationError = new("Duplicate employee record");
 
     public OnboardingTests()
     {
-        _onboarding = new Onboarding(_candidates, _hr, _it);
+        onboarding = new Onboarding(employees, hr, it, payroll);
     }
 
     // ── Happy path ────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Should_onboard_candidate_when_all_steps_succeed()
+    public void ShouldReturnOnboardingResult()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns(AliceContract);
-        _it.ProvisionAccount(Alice.Email).Returns(AliceAccount);
+        employees.Register(Offer).Returns(RegisteredEmployee);
+        hr.GenerateContract(RegisteredEmployee).Returns(GeneratedContract);
+        it.ProvisionAccount(GeneratedContract).Returns(ProvisionedAccount);
+        payroll.Enroll(ProvisionedAccount).Returns(EnrollmentResult);
+        var result = onboarding.OnboardNewHire(Offer);
+        result.Should().BeRight(enrollment => enrollment.Should().Be(EnrollmentResult));
+    }
 
-        var result = _onboarding.ProcessNewHires(Engineering);
+    // ── Failure paths ─────────────────────────────────────────────────────────
 
-        result.Should().ContainSingle()
-            .Which.Should().Be("Onboarded: Alice is ready to start!");
+    [Fact]
+    public void ShouldReturnRegistrationError_WhenRegistrationFails()
+    {
+        employees.Register(Offer).Returns(registrationError);
+        var result = onboarding.OnboardNewHire(Offer);
+        result.Should().BeLeft(error => error.Should().Be(registrationError));
     }
 
     [Fact]
-    public void Should_process_multiple_departments()
+    public void ShouldReturnContractGenerationError_WhenContractGenerationFails()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns(AliceContract);
-        _it.ProvisionAccount(Alice.Email).Returns(AliceAccount);
-
-        _candidates.FindApprovedCandidate(Marketing).Returns(Bob);
-        _hr.GenerateContract(Bob).Returns(BobContract);
-        _it.ProvisionAccount(Bob.Email).Returns(BobAccount);
-
-        var result = _onboarding.ProcessNewHires(Engineering, Marketing);
-
-        result.Should().HaveCount(2)
-            .And.Contain("Onboarded: Alice is ready to start!")
-            .And.Contain("Onboarded: Bob is ready to start!");
-    }
-
-    // ── Failure paths — currently SILENT ─────────────────────────────────────
-    // These tests document what the code does TODAY.
-    // Your goal: make each failure case explicit in the output.
-
-    [Fact]
-    public void Should_throw_when_no_departments_provided()
-    {
-        var act = () => _onboarding.ProcessNewHires();
-
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("No departments to process!");
+        employees.Register(Offer).Returns(RegisteredEmployee);
+        hr.GenerateContract(RegisteredEmployee).Returns(contractGenerationError);
+        var result = onboarding.OnboardNewHire(Offer);
+        result.Should().BeLeft(error => error.Should().Be(contractGenerationError));
     }
 
     [Fact]
-    public void Should_silently_skip_when_no_approved_candidate()
+    public void ShouldReturnAccountProvisioningError_WhenAccountProvisioningFails()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns((Candidate?)null);
-
-        var result = _onboarding.ProcessNewHires(Engineering);
-
-        // ⚠️ Silent! The caller has no idea why Engineering was skipped.
-        result.Should().BeEmpty();
+        employees.Register(Offer).Returns(RegisteredEmployee);
+        hr.GenerateContract(RegisteredEmployee).Returns(GeneratedContract);
+        it.ProvisionAccount(GeneratedContract).Returns(accountProvisioningError);
+        var result = onboarding.OnboardNewHire(Offer);
+        result.Should().BeLeft(error => error.Should().Be(accountProvisioningError));
     }
 
     [Fact]
-    public void Should_silently_skip_when_contract_generation_fails()
+    public void ShouldReturnPayrollEnrollmentError_WhenPayrollEnrollmentError()
     {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns((Contract?)null);
-
-        var result = _onboarding.ProcessNewHires(Engineering);
-
-        // ⚠️ Silent! Indistinguishable from the case above.
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Should_silently_skip_when_it_provisioning_fails()
-    {
-        _candidates.FindApprovedCandidate(Engineering).Returns(Alice);
-        _hr.GenerateContract(Alice).Returns(AliceContract);
-        _it.ProvisionAccount(Alice.Email).Returns((Account?)null);
-
-        var result = _onboarding.ProcessNewHires(Engineering);
-
-        // ⚠️ Silent! Three different failures, one indistinguishable outcome.
-        result.Should().BeEmpty();
+        employees.Register(Offer).Returns(RegisteredEmployee);
+        hr.GenerateContract(RegisteredEmployee).Returns(GeneratedContract);
+        it.ProvisionAccount(GeneratedContract).Returns(ProvisionedAccount);
+        payroll.Enroll(ProvisionedAccount).Returns(payrollEnrollmentError);
+        var result = onboarding.OnboardNewHire(Offer);
+        result.Should().BeLeft(error => error.Should().Be(payrollEnrollmentError));
     }
 }
