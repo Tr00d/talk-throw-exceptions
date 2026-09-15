@@ -1,37 +1,47 @@
 import type {
-  CandidateRepository,
+  EmployeeRepository,
   HrSystem,
   ItProvisioning,
+  Payroll,
 } from "./externals/ports.js";
-import type { Department } from "./models.js";
+import type { AcceptedOffer, OnboardingResult } from "./models.js";
+import {
+  AccountProvisioningException,
+  BusinessException,
+  ContractGenerationException,
+  EmployeeRegistrationException,
+  PayrollEnrollmentException,
+} from "./models.js";
 
 export class Onboarding {
   constructor(
-    private readonly candidates: CandidateRepository,
+    private readonly employees: EmployeeRepository,
     private readonly hr: HrSystem,
     private readonly it: ItProvisioning,
+    private readonly payroll: Payroll,
   ) {}
 
-  processNewHires(...departments: Department[]): string[] {
-    if (departments.length === 0) {
-      throw new Error("No departments to process!");
-    }
-
-    const results: string[] = [];
-
-    for (const dept of departments) {
-      const candidate = this.candidates.findApprovedCandidate(dept);
-      if (candidate !== null) {
-        const contract = this.hr.generateContract(candidate);
-        if (contract !== null) {
-          const account = this.it.provisionAccount(candidate.email);
-          if (account !== null) {
-            results.push(`Onboarded: ${account.name} is ready to start!`);
-          }
-        }
+  onboardNewHire(offer: AcceptedOffer): OnboardingResult {
+    try {
+      const employee = this.employees.register(offer);
+      const contract = this.hr.generateContract(employee);
+      const account = this.it.provisionAccount(contract);
+      const enrollment = this.payroll.enroll(account);
+      return enrollment;
+    } catch (e) {
+      if (e instanceof EmployeeRegistrationException) {
+        throw new BusinessException(e.message);
       }
+      if (e instanceof ContractGenerationException) {
+        throw new BusinessException(e.message);
+      }
+      if (e instanceof AccountProvisioningException) {
+        throw new BusinessException(e.message);
+      }
+      if (e instanceof PayrollEnrollmentException) {
+        throw new BusinessException(e.message);
+      }
+      throw e;
     }
-
-    return results;
   }
 }
