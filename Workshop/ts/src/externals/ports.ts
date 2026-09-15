@@ -1,13 +1,23 @@
-import type { Account, Candidate, Contract, Department } from "../models.js";
+import type {
+  AcceptedOffer,
+  Account,
+  Contract,
+  Employee,
+  OnboardingResult,
+} from "../models.js";
 
-export interface CandidateRepository {
-  findApprovedCandidate(dept: Department): Candidate | null;
+export interface EmployeeRepository {
+  register(offer: AcceptedOffer): Employee;
 }
 
 export interface HrSystem {
-  generateContract(candidate: Candidate): Contract | null;
+  generateContract(employee: Employee): Contract;
 }
 
 export interface ItProvisioning {
-  provisionAccount(email: string): Account | null;
+  provisionAccount(contract: Contract): Account;
+}
+
+export interface Payroll {
+  enroll(account: Account): OnboardingResult;
 }
